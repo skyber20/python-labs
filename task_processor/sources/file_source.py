@@ -1,44 +1,45 @@
 import json
 
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Any
 
 from task_processor.task import Task
-from task_processor.exceptions import IsNotJsonFile, PathNotFound, IncorrectFormatJson
+from task_processor.exceptions import ConfigError, SourceReadError
+
 
 
 class JsonFileSource:
     def __init__(self, path: str | Path):
-        self.path = Path(path)
+        self._path = Path(path)
         self._validate()
 
     def _validate(self) -> None:
-        if not self.path.exists():
-            raise PathNotFound(self.path)
+        if not self._path.is_file():
+            raise ConfigError(f"{self._path}: Путь не существует или не является файлом")
 
-        if not self.path.is_file() or self.path.suffix != ".json":
-            raise IsNotJsonFile(self.path)
+    @staticmethod
+    def _parse_item(item: Any) -> Task | None:
+        if isinstance(item, dict):
+            task_id = item.get("id")
+            payload = item.get("payload")
+
+            if task_id is not None and payload is not None:
+                return Task(str(task_id), payload)
+
+        return None
 
     def get_tasks(self) -> Iterable[Task]:
-        with open(self.path, "r", encoding="utf-8") as f:
-            try:
+        try:
+            with open(self._path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            except json.decoder.JSONDecodeError:
-                raise IncorrectFormatJson(self.path, "Невалидный синтаксис JSON")
+        except OSError as e:
+            raise SourceReadError(f"{self._path}: Системная ошибка при попытке прочитать файл: {e}")
+        except json.decoder.JSONDecodeError as e:
+            raise SourceReadError(f"{self._path}: Невалидный формат Json: {e}")
 
-            if isinstance(data, dict):
-                items = [data]
-            elif isinstance(data, list):
-                items = data
-            else:
-                raise IncorrectFormatJson(self.path, f"Невозможно распарсить {type(data)}")
+        items = data if isinstance(data, list) else [data]
 
-            for item in items:
-                if not isinstance(item, dict):
-                    continue
-
-                task_id = item.get("id", None)
-                payload = item.get("payload", None)
-
-                if task_id is not None and payload is not None:
-                    yield Task(str(task_id), payload)
+        for item in items:
+            task = self._parse_item(item)
+            if task is not None:
+                yield task
