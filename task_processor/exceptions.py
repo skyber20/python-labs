@@ -15,19 +15,5 @@ class ApiError(SourceReadError):
 
 
 class InvalidSource(TaskProcessorError):
-    # def __init__(self, source:):
-    pass
-
-
-
-#
-#
-# class InvalidSource(Exception):
-#     def __init__(self, source: Any):
-#         super().__init__(f"{source}: Не прошел протокол TaskSource")
-#
-#
-# class DuplicateIds(Exception):
-#     def __init__(self, task_id: str):
-#         super().__init__(self, f"{task_id}: Айдишники совпали")
-
+    def __init__(self, source: str):
+        super().__init__(f"{source}: Не соответствует протоколу TaskSource")
