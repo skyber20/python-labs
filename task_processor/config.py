@@ -17,7 +17,7 @@ def setup_logging():
     file_handler.setLevel(logging.INFO)
 
     logger = logging.getLogger('task_processor')
-    logger.setLevel(logger.INFO)
+    logger.setLevel(logging.INFO)
     logger.addHandler(file_handler)
     logger.propagate = False
 
