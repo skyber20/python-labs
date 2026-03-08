@@ -1,9 +1,12 @@
 import httpx
+import logging
 
 from typing import Iterable, Any
 
 from task_processor.exceptions import ApiError, ConfigError
 from task_processor.task import Task
+
+logger = logging.getLogger(__name__)
 
 
 class ApiSource:
@@ -17,6 +20,7 @@ class ApiSource:
         self._timeout = timeout
         self._limit = limit
         self._validate()
+        logger.debug(f"Проинициализирован ApiSource(url={self._url}, timeout={self._timeout}, limit={self._limit})")
 
     def _validate(self) -> None:
         if not isinstance(self._url, str):
@@ -36,6 +40,8 @@ class ApiSource:
 
     def _fetch_data_from_server(self) -> list[dict]:
         params = {"_limit": self._limit} if self._limit else {}
+
+        logger.info(f"Делаю запрос к {self._url}")
         with httpx.Client(timeout=self._timeout) as client:
             response = client.get(self._url, params=params)
             response.raise_for_status()
@@ -50,6 +56,7 @@ class ApiSource:
             if task_id is not None and payload is not None:
                 return Task(f"api_{task_id}", payload)
 
+        logger.warning(f"Не удалось распарсить задачу, так как {type(item).__name__} != dict или невалидные поля")
         return None
 
     def get_tasks(self) -> Iterable[Task]:
@@ -60,12 +67,16 @@ class ApiSource:
             if self._limit:
                 items = items[:self._limit]
 
+            logger.info(f"Получены {len(items)} данных из {self._url}")
+
             for item in items:
                 task = self._parse_item(item)
                 if task is not None:
                     yield task
 
         except httpx.HTTPError as e:
+            logger.error(f"Ошибка при обращении к API: {e}")
             raise ApiError(f"Ошибка при обращении к API: {e}")
         except Exception as e:
+            logger.error(f"Непредвиденная ошибка при работе с API: {e}")
             raise ApiError(f"Непредвиденная ошибка при работе с API: {e}")

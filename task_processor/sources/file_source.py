@@ -1,4 +1,5 @@
 import json
+import logging
 
 from pathlib import Path
 from typing import Iterable, Any
@@ -6,12 +7,14 @@ from typing import Iterable, Any
 from task_processor.task import Task
 from task_processor.exceptions import ConfigError, SourceReadError
 
+logger = logging.getLogger(__name__)
 
 
 class JsonFileSource:
     def __init__(self, path: str | Path):
         self._path = Path(path)
         self._validate()
+        logger.debug(f"Проинициализирован JsonFileSource(path={self._path})")
 
     def _validate(self) -> None:
         if not self._path.is_file():
@@ -26,10 +29,12 @@ class JsonFileSource:
             if task_id is not None and payload is not None:
                 return Task(str(task_id), payload)
 
+        logger.warning(f"Не удалось распарсить задачу, так как {type(item).__name__} != dict или невалидные поля")
         return None
 
     def get_tasks(self) -> Iterable[Task]:
         try:
+            logger.info(f"Читаю файл по пути {self._path}")
             with open(self._path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except OSError as e:
@@ -38,6 +43,8 @@ class JsonFileSource:
             raise SourceReadError(f"{self._path}: Невалидный формат Json: {e}")
 
         items = data if isinstance(data, list) else [data]
+
+        logger.info(f"Получены {len(items)} данных из {self._path}")
 
         for item in items:
             task = self._parse_item(item)
