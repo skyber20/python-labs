@@ -1,12 +1,6 @@
-from typing import runtime_checkable, Iterable, Any
+from typing import Iterable
 
 from task_processor.protocol import TaskSource
-from task_processor.exceptions import InvalidSource, DuplicateIds
-
-
-def validate_source(source: Any):
-    if not isinstance(source, TaskSource):
-        raise InvalidSource(source)
 
 
 class Aggregator:
@@ -17,16 +11,19 @@ class Aggregator:
         task_ids = set()
 
         for source in self._sources:
-            try:
-                validate_source(source)
+            if not isinstance(source, TaskSource):
+                print(f"{source}: Не соответствует протоколу TaskSource")
+                continue
 
+            try:
                 for task in source.get_tasks():
                     task_id = task.id
 
                     if task_id in task_ids:
+                        print(f"ID {task_id} уже есть в задачах")
                         continue
-                        raise DuplicateIds(task_id)
+
                     task_ids.add(task_id)
                     yield task
-            except (InvalidSource, DuplicateIds) as e:
+            except Exception as e:
                 print(e)

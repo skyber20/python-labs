@@ -10,14 +10,16 @@ from task_processor.exceptions import IsNotJsonFile, PathNotFound, IncorrectForm
 class JsonFileSource:
     def __init__(self, path: str | Path):
         self.path = Path(path)
+        self._validate()
 
-    def get_tasks(self) -> Iterable[Task]:
+    def _validate(self) -> None:
         if not self.path.exists():
             raise PathNotFound(self.path)
 
         if not self.path.is_file() or self.path.suffix != ".json":
             raise IsNotJsonFile(self.path)
 
+    def get_tasks(self) -> Iterable[Task]:
         with open(self.path, "r", encoding="utf-8") as f:
             try:
                 data = json.load(f)

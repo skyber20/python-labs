@@ -2,25 +2,32 @@ import httpx
 
 from typing import Iterable
 
-from task_processor.exceptions import NegativeValue, FailGetData
+from task_processor.exceptions import ApiError, ConfigTypeError, ConfigValueError
 from task_processor.task import Task
 
 
 class ApiSource:
-    def __init__(self, url: str = "https://jsonplaceholder.typicode.com/todos", timeout: int | float = 5):
+    def __init__(self, url: str = "https://jsonplaceholder.typicode.com/todos", timeout: int | float = 5, limit: int | None = None):
         self._url = url
         self._timeout = timeout
+        self._limit = limit
         self._validate()
 
     def _validate(self) -> None:
         if not isinstance(self._url, str):
-            raise TypeError(f"{self._url}: Невалидный тип URL")
+            raise ConfigTypeError("url", type(self._url), "str")
 
         if not isinstance(self._timeout, (int, float)):
-            raise TypeError(f"{self._timeout}: Невалидный тип timeout")
+            raise ConfigTypeError("timeout", type(self._timeout), "int | float")
+
+        if not isinstance(self._limit, (None, int)):
+            raise ConfigTypeError("limit", type(self._limit), "int")
 
         if self._timeout <= 0:
-            raise NegativeValue("timeout")
+            raise ConfigValueError("timeout", "должно быть положительное значение")
+
+        if self._limit is not None and self._limit <= 0:
+            raise ConfigValueError("limit", "должно быть положительное значение")
 
     @property
     def url(self) -> str:
@@ -49,4 +56,4 @@ class ApiSource:
                     yield Task(f"api_{task_id}", payload)
 
         except httpx.HTTPError as e:
-            raise FailGetData(str(e))
+            raise ApiError(str(e))
