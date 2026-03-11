@@ -35,9 +35,9 @@ def test_file_source_invalid_json_format(tmp_path):
     f = tmp_path / "trash.json"
     f.write_text("123")
 
-    source = JsonFileSource(f)
+    file_source = JsonFileSource(f)
     with pytest.raises(SourceReadError):
-        list(source.get_tasks())
+        list(file_source.get_tasks())
 
 
 def test_file_source_not_found():
@@ -50,9 +50,21 @@ def test_file_source_skips_bad_items(tmp_path):
 
     f.write_text('[{"id": 1, "payload": "ok"}, {"id": "two"}, "just a string"]')
 
-    source = JsonFileSource(f)
-    tasks = list(source.get_tasks())
+    file_source = JsonFileSource(f)
+    tasks = list(file_source.get_tasks())
 
     assert len(tasks) == 2
     assert tasks[0].id == "1"
     assert tasks[1].id == "two"
+
+
+def test_file_source_invalid_json(tmp_path):
+    f = tmp_path / "invalid.json"
+    f.write_text('{id: 1, "payload": "task"}')
+
+    file_source = JsonFileSource(f)
+    with pytest.raises(SourceReadError) as e:
+        list(file_source.get_tasks())
+
+    assert "Невалидный формат Json" in str(e)
+

@@ -89,4 +89,38 @@ def test_api_source_status_error(mock_get):
     api_source = ApiSource()
     with pytest.raises(ApiError):
         list(api_source.get_tasks())
+
+
+def test_api_source_parse_item_not_dict(caplog):
+    api_source = ApiSource()
+    result = api_source._parse_item("строка строка")
+
+    assert result is None
+    assert "получен str вместо dict" in caplog.text
+
+
+@patch("httpx.Client.get")
+def test_api_source_single_dict_normalization(mock_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"id": "1", "title": "Only one task"}
+
+    mock_get.return_value = mock_response
+
+    source = ApiSource()
+    tasks = list(source.get_tasks())
+
+    assert len(tasks) == 1
+    assert tasks[0].id == "1"
+
+
+@patch("task_processor.sources.api_source.ApiSource._fetch_data_from_server")
+def test_api_source_unexpected_error(mock_fetch):
+    mock_fetch.side_effect = Exception("Че то случилось")
+
+    api_source = ApiSource()
+    with pytest.raises(Exception) as e:
+        list(api_source.get_tasks())
+
+    assert "Непредвиденная ошибка" in str(e)
         
