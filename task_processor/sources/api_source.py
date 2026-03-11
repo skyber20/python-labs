@@ -1,3 +1,5 @@
+import uuid
+
 import httpx
 import logging
 
@@ -51,12 +53,13 @@ class ApiSource:
     def _parse_item(item: Any) -> Task | None:
         if isinstance(item, dict):
             task_id = item.get("id")
-            payload = item.get("title") or item.get("payload")
+            if task_id is None:
+                task_id = uuid.uuid4().hex
+            payload = item.get("title", "") or item.get("payload", "")
 
-            if task_id is not None and payload is not None:
-                return Task(f"api_{task_id}", payload)
+            return Task(f"{task_id}", payload)
 
-        logger.warning(f"Не удалось распарсить задачу, так как {type(item).__name__} != dict или невалидные поля")
+        logger.warning(f"Не удалось распарсить задачу, получен {type(item).__name__} вместо dict")
         return None
 
     def get_tasks(self) -> Iterable[Task]:
@@ -75,8 +78,6 @@ class ApiSource:
                     yield task
 
         except httpx.HTTPError as e:
-            logger.error(f"Ошибка при обращении к API: {e}")
             raise ApiError(f"Ошибка при обращении к API: {e}")
         except Exception as e:
-            logger.error(f"Непредвиденная ошибка при работе с API: {e}")
             raise ApiError(f"Непредвиденная ошибка при работе с API: {e}")

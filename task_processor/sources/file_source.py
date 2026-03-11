@@ -1,3 +1,4 @@
+import uuid
 import json
 import logging
 
@@ -24,12 +25,13 @@ class JsonFileSource:
     def _parse_item(item: Any) -> Task | None:
         if isinstance(item, dict):
             task_id = item.get("id")
-            payload = item.get("payload")
+            if task_id is None:
+                task_id = uuid.uuid4().hex
+            payload = item.get("payload", "")
 
-            if task_id is not None and payload is not None:
-                return Task(str(task_id), payload)
+            return Task(f"{task_id}", payload)
 
-        logger.warning(f"Не удалось распарсить задачу, так как {type(item).__name__} != dict или невалидные поля")
+        logger.warning(f"Не удалось распарсить задачу, получен {type(item).__name__} вместо dict")
         return None
 
     def get_tasks(self) -> Iterable[Task]:
@@ -37,6 +39,8 @@ class JsonFileSource:
             logger.info(f"Читаю файл по пути {self._path}")
             with open(self._path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+                if not isinstance(data, (list, dict)):
+                    raise SourceReadError(f"Содержание Json должно быть списком или словарем, получено: {type(data).__name__}")
         except OSError as e:
             raise SourceReadError(f"{self._path}: Системная ошибка при попытке прочитать файл: {e}")
         except json.decoder.JSONDecodeError as e:
