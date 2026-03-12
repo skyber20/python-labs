@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class GeneratorSource:
+    """
+    Класс источника, который генерирует данные типа Task
+    """
     def __init__(self, count: int, payload_default: str = "Payload number"):
         self._count = count
         self._payload_default = payload_default
@@ -17,6 +20,7 @@ class GeneratorSource:
         logger.debug(f"Проинициализирован GeneratorSource(count={self._count}, payload_default={self._payload_default})")
 
     def _validate(self):
+        """Валидация данных при создании экзампляра"""
         if not isinstance(self._count, int):
             raise ConfigError("Параметр count должен быть целочисленным типом")
 
@@ -27,6 +31,10 @@ class GeneratorSource:
             raise ConfigError("Параметр payload_default должен быть строковым типом")
 
     def get_tasks(self) -> Iterable[Task]:
+        """
+        Лениво собирает данные из источника
+        :return: Объекты Task
+        """
         logger.info(f"Генерирую задачи ({self._count})")
         for i in range(self._count):
             task_id = uuid.uuid4().hex

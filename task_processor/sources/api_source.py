@@ -18,6 +18,12 @@ class ApiSource:
         timeout: int | float = 5,
         limit: int | None = None
     ):
+        """
+        Класс источника, который получает задачи из API
+        :param url: url
+        :param timeout: время ожидания задач
+        :param limit: сколько задач получаем
+        """
         self._url = url
         self._timeout = timeout
         self._limit = limit
@@ -25,6 +31,7 @@ class ApiSource:
         logger.debug(f"Проинициализирован ApiSource(url={self._url}, timeout={self._timeout}, limit={self._limit})")
 
     def _validate(self) -> None:
+        """Валидация данных при создании экзампляра"""
         if not isinstance(self._url, str):
             raise ConfigError("Параметр url должен быть строковым типом")
 
@@ -41,6 +48,10 @@ class ApiSource:
             raise ConfigError("Параметр limit должен быть положительным значением")
 
     def _fetch_data_from_server(self) -> list[dict]:
+        """
+        Получение данные с сервера
+        :return: список задач
+        """
         params = {"_limit": self._limit} if self._limit else {}
 
         logger.info(f"Делаю запрос к {self._url}")
@@ -51,6 +62,11 @@ class ApiSource:
 
     @staticmethod
     def _parse_item(item: Any) -> Task | None:
+        """
+        Преоброазование задачи из сервера в Task
+        :param item: задача
+        :return: Task
+        """
         if isinstance(item, dict):
             task_id = item.get("id")
             if task_id is None:
@@ -63,6 +79,10 @@ class ApiSource:
         return None
 
     def get_tasks(self) -> Iterable[Task]:
+        """
+        Лениво собирает данные из источника
+        :return: Объекты Task
+        """
         try:
             items = self._fetch_data_from_server()
             items = items if isinstance(items, list) else [items]

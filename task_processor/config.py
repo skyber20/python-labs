@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 def setup_logging():
+    """Настройка логгера"""
     BASE_DIR = Path(__file__).resolve().parent.parent
     LOG_FILE = BASE_DIR / 'logs.log'
 

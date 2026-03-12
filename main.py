@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    """Демоверсия работы Task Processor"""
     print("Начало Task Processor Demo:\n")
 
     demo_data = [

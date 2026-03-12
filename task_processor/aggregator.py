@@ -11,10 +11,19 @@ logger = logging.getLogger(__name__)
 
 class Aggregator:
     def __init__(self, sources: Iterable[Any] | None = None):
+        """
+        Агрегатор для сбора задач из различных источников, которые удовлетворяют протоколу TaskSource
+        :param sources: Источники задач
+        """
         self._sources = self._filter_protocol_sources(sources or [])
 
     @staticmethod
     def _filter_protocol_sources(sources: Iterable[Any]) -> Iterable[TaskSource]:
+        """
+        Фильтрация источников
+        :param sources: Все переданные источники
+        :return: Источники, удовлетворяющие TaskSource
+        """
         protocol_sources = []
         for source in sources:
             if isinstance(source, TaskSource):
@@ -25,6 +34,10 @@ class Aggregator:
         return protocol_sources
 
     def get_tasks(self) -> Iterable[Task]:
+        """
+        Лениво собирает данные из всех источников, прошедших валидацию
+        :return: Объекты Task
+        """
         ids = set()
         for source in self._sources:
             try:
