@@ -29,7 +29,7 @@ pytest --cov=task_processor
 
 ## Структура проекта
 ```bash
-lab1
+lab
 ├── task_processor/
 │   ├── sources/
 │   │   ├── __init__.py

@@ -18,3 +18,7 @@ class InvalidSource(TaskProcessorError):
     """Исключение при несоотвествии источника протоколу TaskSource"""
     def __init__(self, source: str):
         super().__init__(f"{source}: Не соответствует протоколу TaskSource")
+
+
+class ValidationError(TaskProcessorError):
+    pass
