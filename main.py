@@ -40,7 +40,15 @@ def main():
         task_count = 0
         for task in aggregator.get_tasks():
             task_count += 1
-            print(f"[{task_count}] ID: {task.id} | Payload: {task.payload}\n")
+
+            print(f"\n[{task_count}]")
+            print(f"ID:         {task.id}")
+            print(f"Desc:       {task.description}")
+            print(f"Priority:   {task.priority}")
+            print(f"Status:     {task.status}")
+            print(f"Created at: {task.created_at}")
+            print(f"Summary:    {task.summary}")
+            print("-" * 40 + '\n')
 
         print(f"\nУспешно обработано уникальных задач: {task_count}\n")
 

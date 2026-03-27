@@ -15,7 +15,7 @@ def test_file_source_success_list(tmp_path):
     assert len(tasks) == 2
     assert all(isinstance(task, Task) for task in tasks)
     assert tasks[0].id == "1"
-    assert tasks[0].payload == "Test1"
+    assert tasks[0].description == "Test1"
 
 
 def test_file_source_success_single(tmp_path):
@@ -28,7 +28,7 @@ def test_file_source_success_single(tmp_path):
     assert len(tasks) == 1
     assert isinstance(tasks[0], Task)
     assert tasks[0].id == "1"
-    assert tasks[0].payload == "Test1"
+    assert tasks[0].description == "Test1"
 
 
 def test_file_source_invalid_json_format(tmp_path):

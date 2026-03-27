@@ -1,62 +1,47 @@
-import uuid
-
 import httpx
 import logging
 
 from typing import Iterable, Any
 
-from task_processor.exceptions import ApiError, ConfigError
+from task_processor.exceptions import ApiError
 from task_processor.task import Task
+from task_processor.descriptors import Typed, IntRange
 
 logger = logging.getLogger(__name__)
 
 
 class ApiSource:
+    """Класс источника, который получает задачи из API"""
+    url = Typed(str)
+    timeout = IntRange(min_value=1)
+    limit = IntRange(min_value=1, allow_none=True)
+
     def __init__(
         self,
         url: str = "https://jsonplaceholder.typicode.com/todos",
-        timeout: int | float = 5,
+        timeout: int = 5,
         limit: int | None = None
     ):
         """
-        Класс источника, который получает задачи из API
         :param url: url
         :param timeout: время ожидания задач
         :param limit: сколько задач получаем
         """
-        self._url = url
-        self._timeout = timeout
-        self._limit = limit
-        self._validate()
-        logger.debug(f"Проинициализирован ApiSource(url={self._url}, timeout={self._timeout}, limit={self._limit})")
-
-    def _validate(self) -> None:
-        """Валидация данных при создании экзампляра"""
-        if not isinstance(self._url, str):
-            raise ConfigError("Параметр url должен быть строковым типом")
-
-        if not isinstance(self._timeout, (int, float)):
-            raise ConfigError("Параметр timeout должен быть целочисленным или вещественным типом")
-
-        if self._timeout <= 0:
-            raise ConfigError("Параметр timeout должен быть положительным значением")
-
-        if self._limit is not None and not isinstance(self._limit, int):
-            raise ConfigError("Параметр limit должен быть целочисленным типом")
-
-        if self._limit is not None and self._limit <= 0:
-            raise ConfigError("Параметр limit должен быть положительным значением")
+        self.url = url
+        self.timeout = timeout
+        self.limit = limit
+        logger.debug(f"Проинициализирован ApiSource(url={self.url}, timeout={self.timeout}, limit={self.limit})")
 
     def _fetch_data_from_server(self) -> list[dict]:
         """
         Получение данные с сервера
         :return: список задач
         """
-        params = {"_limit": self._limit} if self._limit else {}
+        params = {"_limit": self.limit} if self.limit else {}
 
-        logger.info(f"Делаю запрос к {self._url}")
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(self._url, params=params)
+        logger.info(f"Делаю запрос к {self.url}")
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.get(self.url, params=params)
             response.raise_for_status()
             return response.json()
 
@@ -69,11 +54,11 @@ class ApiSource:
         """
         if isinstance(item, dict):
             task_id = item.get("id")
-            if task_id is None:
-                task_id = uuid.uuid4().hex
+            if task_id is not None:
+                task_id = f"api_{task_id}"
             payload = item.get("title", "") or item.get("payload", "")
 
-            return Task(f"{task_id}", payload)
+            return Task(description=payload, task_id=task_id)
 
         logger.warning(f"Не удалось распарсить задачу, получен {type(item).__name__} вместо dict")
         return None
@@ -87,10 +72,10 @@ class ApiSource:
             items = self._fetch_data_from_server()
             items = items if isinstance(items, list) else [items]
 
-            if self._limit:
-                items = items[:self._limit]
+            if self.limit:
+                items = items[:self.limit]
 
-            logger.info(f"Получены {len(items)} данных из {self._url}")
+            logger.info(f"Получены {len(items)} данных из {self.url}")
 
             for item in items:
                 task = self._parse_item(item)

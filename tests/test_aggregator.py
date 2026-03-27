@@ -34,21 +34,21 @@ class ExceptSource:
 
 
 def test_aggregator_success():
-    t1 = Task(id="one", payload="task 1")
-    t2 = Task(id="2", payload="task 2")
+    t1 = Task(description="task 1", priority=1, task_id="one")
+    t2 = Task(description="task 2", priority=2, task_id="2")
 
     agg = Aggregator([MockSource([t1, t2])])
     tasks = list(agg.get_tasks())
 
     assert len(tasks) == 2
     assert tasks[0].id == "one"
-    assert tasks[1].payload == "task 2"
+    assert tasks[1].description == "task 2"
 
 
 def test_duplicate_ids():
-    t1 = Task(id="1", payload="task 1")
-    t2 = Task(id="2", payload="task 2")
-    t3 = Task(id="1", payload="task 3")
+    t1 = Task("task 1", 1, "1")
+    t2 = Task("task 2", 2, "2")
+    t3 = Task("task 3", 3, "1")
 
     agg = Aggregator([MockSource([t1, t2, t3])])
     tasks = list(agg.get_tasks())
@@ -57,12 +57,12 @@ def test_duplicate_ids():
 
 
 def test_invalid_sources(caplog):
-    t1 = Task(id="1", payload="task 1")
-    t2 = Task(id="2", payload="task 2")
+    t1 = Task("task 1", 1, "1")
+    t2 = Task("task 2", 2, "2")
 
     agg = Aggregator([MockInvalidSource([t1, t2])])
 
-    assert f"MockInvalidSource: Не соответствует протоколу TaskSource" in caplog.text
+    assert "MockInvalidSource: Не соответствует протоколу TaskSource" in caplog.text
     assert len(agg._sources) == 0
 
 

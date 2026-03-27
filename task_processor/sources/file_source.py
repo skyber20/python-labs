@@ -1,4 +1,3 @@
-import uuid
 import json
 import logging
 
@@ -6,25 +5,22 @@ from pathlib import Path
 from typing import Iterable, Any
 
 from task_processor.task import Task
-from task_processor.exceptions import ConfigError, SourceReadError
+from task_processor.exceptions import SourceReadError
+from task_processor.descriptors import ExistingFile
 
 logger = logging.getLogger(__name__)
 
 
 class JsonFileSource:
+    """Класс источника, который получает данные из файла"""
+    path = ExistingFile()
+
     def __init__(self, path: str | Path):
         """
-        Класс источника, который получает данные из файла
         :param path: Путь к файлу
         """
-        self._path = Path(path)
-        self._validate()
-        logger.debug(f"Проинициализирован JsonFileSource(path={self._path})")
-
-    def _validate(self) -> None:
-        """Валидация данных при создании экзампляра"""
-        if not self._path.is_file():
-            raise ConfigError(f"{self._path}: Путь не существует или не является файлом")
+        self.path = path
+        logger.debug(f"Проинициализирован JsonFileSource(path={self.path})")
 
     @staticmethod
     def _parse_item(item: Any) -> Task | None:
@@ -35,11 +31,10 @@ class JsonFileSource:
         """
         if isinstance(item, dict):
             task_id = item.get("id")
-            if task_id is None:
-                task_id = uuid.uuid4().hex
             payload = item.get("payload", "")
+            priority = item.get("priority", 0)
 
-            return Task(f"{task_id}", payload)
+            return Task(payload, priority, task_id)
 
         logger.warning(f"Не удалось распарсить задачу, получен {type(item).__name__} вместо dict")
         return None
@@ -50,19 +45,19 @@ class JsonFileSource:
         :return: Объекты Task
         """
         try:
-            logger.info(f"Читаю файл по пути {self._path}")
-            with open(self._path, "r", encoding="utf-8") as f:
+            logger.info(f"Читаю файл по пути {self.path}")
+            with open(self.path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if not isinstance(data, (list, dict)):
                     raise SourceReadError(f"Содержание Json должно быть списком или словарем, получено: {type(data).__name__}")
         except OSError as e:
-            raise SourceReadError(f"{self._path}: Системная ошибка при попытке прочитать файл: {e}")
+            raise SourceReadError(f"{self.path}: Системная ошибка при попытке прочитать файл: {e}")
         except json.decoder.JSONDecodeError as e:
-            raise SourceReadError(f"{self._path}: Невалидный формат Json: {e}")
+            raise SourceReadError(f"{self.path}: Невалидный формат Json: {e}")
 
         items = data if isinstance(data, list) else [data]
 
-        logger.info(f"Получены {len(items)} данных из {self._path}")
+        logger.info(f"Получены {len(items)} данных из {self.path}")
 
         for item in items:
             task = self._parse_item(item)

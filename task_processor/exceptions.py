@@ -21,4 +21,11 @@ class InvalidSource(TaskProcessorError):
 
 
 class ValidationError(TaskProcessorError):
+    """Валидационные исключения от дескрипторов"""
     pass
+
+
+class StatusError(ValidationError):
+    """Ошибка при переходе из одного статуса в другой"""
+    def __init__(self, cur, value):
+        super().__init__(f"Недопустимый переход: нельзя изменить статус из '{cur}' в '{value}'")

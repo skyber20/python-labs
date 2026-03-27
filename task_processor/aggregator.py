@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class Aggregator:
+    """Агрегатор для сбора задач из различных источников, которые удовлетворяют протоколу TaskSource"""
     def __init__(self, sources: Iterable[Any] | None = None):
         """
-        Агрегатор для сбора задач из различных источников, которые удовлетворяют протоколу TaskSource
         :param sources: Источники задач
         """
         self._sources = self._filter_protocol_sources(sources or [])

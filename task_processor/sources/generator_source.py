@@ -1,43 +1,38 @@
 import uuid
 import logging
+import random
 
 from typing import Iterable
 
 from task_processor.task import Task
-from task_processor.exceptions import ConfigError
+from task_processor.descriptors import IntRange, Typed
 
 logger = logging.getLogger(__name__)
 
 
 class GeneratorSource:
-    """
-    Класс источника, который генерирует данные типа Task
-    """
+    """Класс источника, который генерирует данные типа Task"""
+    count = IntRange(min_value=1)
+    payload_default = Typed(str)
+
     def __init__(self, count: int, payload_default: str = "Payload number"):
-        self._count = count
-        self._payload_default = payload_default
-        self._validate()
-        logger.debug(f"Проинициализирован GeneratorSource(count={self._count}, payload_default={self._payload_default})")
-
-    def _validate(self):
-        """Валидация данных при создании экзампляра"""
-        if not isinstance(self._count, int):
-            raise ConfigError("Параметр count должен быть целочисленным типом")
-
-        if self._count <= 0:
-            raise ConfigError("Параметр count должен быть положительным значением")
-
-        if not isinstance(self._payload_default, str):
-            raise ConfigError("Параметр payload_default должен быть строковым типом")
+        """
+        :param count: Количество задач, которые нужно сгенерить
+        :param payload_default: Описание задачи по дэфолту
+        """
+        self.count = count
+        self.payload_default = payload_default
+        logger.debug(f"Проинициализирован GeneratorSource(count={self.count}, payload_default={self.payload_default})")
 
     def get_tasks(self) -> Iterable[Task]:
         """
         Лениво собирает данные из источника
         :return: Объекты Task
         """
-        logger.info(f"Генерирую задачи ({self._count})")
-        for i in range(self._count):
+        logger.info(f"Генерирую задачи ({self.count})")
+        for i in range(self.count):
             task_id = uuid.uuid4().hex
-            payload = f"{self._payload_default} #{i + 1}"
+            payload = f"{self.payload_default} #{i + 1}"
+            priority = random.randint(1, 10)
 
-            yield Task(task_id, payload)
+            yield Task(payload, priority, task_id)
