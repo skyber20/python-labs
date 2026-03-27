@@ -123,4 +123,3 @@ def test_api_source_unexpected_error(mock_fetch):
         list(api_source.get_tasks())
 
     assert "Непредвиденная ошибка" in str(e)
-        
