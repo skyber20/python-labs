@@ -29,3 +29,9 @@ class StatusError(ValidationError):
     """Ошибка при переходе из одного статуса в другой"""
     def __init__(self, cur, value):
         super().__init__(f"Недопустимый переход: нельзя изменить статус из '{cur}' в '{value}'")
+
+
+class InvalidTask(TaskProcessorError):
+    """Исключение при передаче объекта != Task"""
+    def __init__(self, obj_type: str):
+        super().__init__(f"{obj_type}: Не является Task")
