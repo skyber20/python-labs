@@ -20,6 +20,12 @@ class InvalidSource(TaskProcessorError):
         super().__init__(f"{source}: Не соответствует протоколу TaskSource")
 
 
+class InvalidHandler(TaskProcessorError):
+    """Исключение при несоотвествии обработчика протоколу TaskHandler"""
+    def __init__(self, handler: str):
+        super().__init__(f"{handler}: Не соответствует протоколу TaskHandler")
+
+
 class ValidationError(TaskProcessorError):
     """Валидационные исключения от дескрипторов"""
     pass

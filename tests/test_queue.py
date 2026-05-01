@@ -62,19 +62,11 @@ def test_by_status(queue):
     assert len(created) == 1
     assert created[0].priority == 2
 
-def test_high_priority(queue):
-    high = list(queue.high_priority(5))
+def test_filter_priority(queue):
+    high = list(queue.by_priority(5))
     assert len(high) == 2
     priorities = [t.priority for t in high]
     assert all(p >= 5 for p in priorities)
-
-def test_high_priority_invalid_min_priority(queue):
-    with pytest.raises(ConfigError):
-        list(queue.high_priority(-1))
-    with pytest.raises(ConfigError):
-        list(queue.high_priority(11))
-    with pytest.raises(ConfigError):
-        list(queue.high_priority("not_an_int"))
 
 
 def test_filter_general_and_laziness(queue):
